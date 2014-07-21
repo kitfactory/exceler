@@ -20,7 +20,7 @@ items = Exceler.scan_items( list ,so )
 # Example2 F列が済となっていれば済とみなす例
 
 list = Exceler.list_files( "test2" )
-so = ScanOption.new( 2 , "A" , "B" , "D" , "E" , "F" , "済" )
+so = Exceler::ScanOption.new( 2 , "A" , "B" , "D" , "E" , "F" , "済" )
 items = Exceler.scan_items( list ,so )
 assigned_items = Exceler.pickup_assigned( items , "山田")
 incomplete_items = Exceler.pickup_incomplete( items )

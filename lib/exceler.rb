@@ -1,19 +1,7 @@
 require "exceler/version"
+require "roo"
 
 module Exceler
-	def hello
-		puts "hello"
-	end
-
-	def self.hello2
-		puts "helo2"
-	end
-
-	class Foo
-		def self.bar
-			puts "bar"
-		end
-	end
 
 #
 # ScanOption
@@ -25,17 +13,21 @@ class ScanOption
 	# new
 	# 
 	# ==== Args
+	# sheet :: シート名(nilの場合は全てのシートに適用)
 	# header :: ヘッダー行(スキップする行数)
 	# id_row :: アイテムの存在を確認する列
+	# content_row :: コンテンツの内容を表す列
 	# assign_row :: 担当者の列
 	# start_row :: 開始日の列
 	# limit_row :: 期限の列
 	# state_row :: ステータスの列
 	# state_condition :: 合致で済とする場合は合致の文字列、埋まっていることで済とする場合はnil
 	# 
-	def initialize( header , id_row , assign_row , start_row , limit_row , state_row,  state_condition )
+	def initialize( sheet, header , id_row , content_row , assign_row , start_row , limit_row , state_row,  state_condition )
+		@sheet = sheet
 		@header = header			# ヘッダー行(スキップする行数)
 		@id_row = id_row			# アイテムの存在を確認する列
+		@content_row = content_row
 		@assign_row	= assign_row	# 担当者の列
 		@start_row	= start_row		# 開始日の列
 		@limit_row	= limit_row		# 期限の列
@@ -43,8 +35,10 @@ class ScanOption
 		@state_condition = state_condition
 	end
 
+	attr_reader :sheet
 	attr_reader :header
 	attr_reader :id_row
+	attr_reader	:content_row
 	attr_reader :assign_row
 	attr_reader :start_row
 	attr_reader :limit_row
@@ -60,6 +54,8 @@ class Item
 	INCOMPLETE = 2
 
 	def initialize
+		@file = nil
+		@id = nil
 		@content = nil
 		@state = INCOMPLETE
 		@assign = nil
@@ -67,6 +63,8 @@ class Item
 		@limit = nil
 	end
 
+	attr_accessor :file
+	attr_accessor :id
 	attr_accessor :content
 	attr_accessor :state
 	attr_accessor :assign
@@ -129,7 +127,7 @@ end
 	# opt :: 検索時のオプション、ScanOptionオブジェクト
 	# ==== Return
 	# アイテムの配列
-	def self.scan_items( files , opt)
+	def self.scan_items( files , opt )
 		ret = []
 		if( opt == nil )
 			return nil
@@ -146,6 +144,14 @@ end
 			end
 
 			for sheet in s.sheets
+				# if sheet option is nil then scan all sheets
+				# else scan only one sheet that has the specified sheet name. 
+				if( opt.sheet != nil )
+					if( opt.sheet != sheet.sheet )
+						next
+					end
+				end
+
 				s.default_sheet = sheet
 				if( s.first_row == nil )
 					next
@@ -159,6 +165,11 @@ end
 					c = s.cell( opt.id_row , num )
 					if( c != nil )
 						i = Item.new
+						i.file = file
+						i.id = s.cell( opt.id_row, num )
+						if( opt.content_row != nil )
+							i.content = s.cell( opt.content_row ,num )
+						end
 						if( opt.assign_row != nil )
 							i.assign = s.cell( opt.assign_row , num )
 						end
@@ -195,6 +206,25 @@ end
 		return ret
 	end
 
+
+	#
+	#  渡されたアイテムのうち、割り当てられた人を一覧します。
+	#  list item assigned person.
+	#
+	# ==== Args
+	# items :: アイテムの配列
+	# ==== Return
+	# 担当に割あたっている人の配列
+	#        
+	def self.list_assigned_person( items )
+		pl = {}
+		for item in items
+			if( item.assign != nil )
+				pl[item.assign] = item
+			end
+		end
+		return pl.keys
+	end
 	
 	#
 	#  渡されたアイテムのうち、特定の人に割り当てられたアイテムをピックアップします。
@@ -242,7 +272,7 @@ end
 	# items :: アイテムの配列
 	# ==== Return
 	# 期限切れになっているアイテムの配列
-	def self.pickup_expiration( items )
+	def self.pickup_expired( items )
 		ret = []
 		current = Date.today
 		incomplete = pickup_incomplete( items )
@@ -255,5 +285,82 @@ end
 			end
 		end
 		return ret
+	end
+
+	#
+	# タスクの状況をHTMLにする。
+	# transform task status to html string.
+	#
+	# ==== Args
+	# items :: アイテムの配列
+	# ==== Return
+	# HTML Content
+	#
+	def self.export_item_html( items , title , subtitle )
+
+		if( title != nil )
+			puts "!!"
+			s+="<p class='exceler-title'><h3>"+title+ "-"
+			if( subtitle != nil )
+				s+=subtitle+ ":" + items.length.to_s
+			end
+			s+="</h3><br>"
+		end
+		s += "<table class='exceler-table'>"
+		for item in items
+			s+="<tr>"
+			if( item.file != nil )
+				s+=( "<td>"+ item.file + "</td>" )
+			end
+			if( item.content != nil )
+				s+=( "<td>"+ item.content.to_s + "</td>" )
+			end
+			if( item.limit != nil )
+				s+=( "<td>"+ item.limit.to_s + "</td>" )
+			end
+			s+="</td>"
+		end
+		s+= "</table>"
+		s+= "</p>"	
+		puts "------"
+		puts s	
+		return s
+	end
+
+	DEFAULT_CSS = "<style type='text/css'>
+		.exceler-title h3 {
+		color : blue;
+	}
+	.exceler-table {
+		border-collapse: collapse;
+		background-color: #ccf;
+		width : 100%;
+		border : 1px solid #888;
+	}
+	.exceler-table tr {
+		border : 1px solid #888;
+	}
+	.exceler-table td {
+		border : 1px solid #888;
+	}
+	</style>"
+
+	#
+	# 作成したHTMLファイルコンテンツにCSSを埋め込んで保存します。
+	# ==== Args
+	# file :: output file
+	# content :: Content of the file
+	# ==== Return
+	# HTML Content
+	#
+	def self.write_file( file , content , css )
+		f = open( file , "w" )
+		if( css == nil )
+			css = DEFAULT_CSS
+		end
+		f.puts( DEFAULT_CSS )
+		f.puts( content )
+		f.flush()
+		f.close()
 	end
 end
