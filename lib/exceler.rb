@@ -2,7 +2,6 @@ require "exceler/version"
 require "roo"
 
 module Exceler
-
 #
 # ScanOption
 # アイテムを取得する際のオプション
@@ -87,7 +86,7 @@ end
 		for ext in EXT_PATTERNS
 			filepattern = dir+File::SEPARATOR+"*."+ext;
 			Dir[filepattern].each do |file|  
-				puts "founds " + file
+#				puts "founds " + file
 				ret.push( file )
 			end
 		end
@@ -136,10 +135,10 @@ end
 			puts file
 			re = Regexp.new( XLS+"$" )
 			if( file =~ re ) # XLS file
-				puts "XLS file scan " + file
+				# puts "XLS file scan " + file
 				s = Roo::Excel.new(file)
 			else	#XLSX file
-				puts "XLSX file scan"+file
+				# puts "XLSX file scan"+file
 				s = Roo::Excelx.new(file) 
 			end
 
@@ -147,7 +146,7 @@ end
 				# if sheet option is nil then scan all sheets
 				# else scan only one sheet that has the specified sheet name. 
 				if( opt.sheet != nil )
-					if( opt.sheet != sheet.sheet )
+					if( opt.sheet != sheet )
 						next
 					end
 				end
@@ -172,6 +171,7 @@ end
 						end
 						if( opt.assign_row != nil )
 							i.assign = s.cell( opt.assign_row , num )
+							i.assign.strip!
 						end
 						if( opt.start_row != nil )
 							i.start = s.cell( opt.start_row , num )
@@ -278,7 +278,7 @@ end
 		incomplete = pickup_incomplete( items )
 		for item in incomplete
 			if( item.limit != nil )
-				puts item.limit.strftime("%Y/%m/%d")+"-"+current.strftime("%Y/%m%d")
+				# puts item.limit.strftime("%Y/%m/%d")+"-"+current.strftime("%Y/%m%d")
 				if( item.limit < current )
 					ret.push(item)
 				end
@@ -297,7 +297,7 @@ end
 	# HTML Content
 	#
 	def self.export_item_html( items , title , subtitle )
-
+		s=""
 		if( title != nil )
 			puts "!!"
 			s+="<p class='exceler-title'><h3>"+title+ "-"
@@ -322,8 +322,8 @@ end
 		end
 		s+= "</table>"
 		s+= "</p>"	
-		puts "------"
-		puts s	
+		# puts "------"
+		# puts s	
 		return s
 	end
 
@@ -353,7 +353,7 @@ end
 	# ==== Return
 	# HTML Content
 	#
-	def self.write_file( file , content , css )
+	def self.write_html_file( file , content , css )
 		f = open( file , "w" )
 		if( css == nil )
 			css = DEFAULT_CSS
@@ -363,4 +363,28 @@ end
 		f.flush()
 		f.close()
 	end
+	
+	#
+	# マップオブジェクトをCSVをにして保存します。
+	# ==== Args
+	# file :: output file
+	# content :: Content of the file
+	# ==== Return
+	# HTML Content
+	#
+	def self.write_csv_file( file , map )
+		keys = map.keys
+		ks = ""
+		vs = ""
+		for key in keys
+				ks += (key	 + ",")
+				vs += (map[key].to_s + "," )
+		end
+		f = open( file , "w" )
+		f.puts( ks )
+		f.puts( vs )
+		f.flush()
+		f.close()
+	end
+	
 end

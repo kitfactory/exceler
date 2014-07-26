@@ -1,6 +1,7 @@
 # Exceler
 
 Excel document parser for project metrics.
+プロジェクト計測に使用できる、エクセル文書パーサー
 
 ## Installation
 
@@ -11,25 +12,37 @@ Excel document parser for project metrics.
 ```
 require 'exceler'
 
-# Example1 F列が埋まっていれば済とみなす例
+#find Excel files エクセルファイルを探します。
+files = list = Exceler.list_files( "." )
 
-list = Exceler.list_files( "test1" )
-so = ScanOption.new( 0 , "A" , "B" , "D" , "E" , "F" , nil )
+#create item scan option　エクセルファイルをスキャンするオプションを設定します。
+# sheet,header,id,contnet,assign,start,limit,state,state_condition
+so = Exceler::ScanOption.new( nil, 1 ,  "B" , "C",  "D" ,  nil , nil , "E" , nil )
+
+#find items in excel files エクセルファイルからアイテムを探します。
 items = Exceler.scan_items( list ,so )
+	
+#find persons who are assigned to some issues.　アイテムの担当をリストアップします。
+plist = Exceler.list_assigned_person( items )
+	
+#create issue list for each person　担当ごとに作業します。
+s = "" # HTML
+m = {};	
 
-# Example2 F列が済となっていれば済とみなす例
+for p in plist
+	pi = Exceler.pickup_assigned( items , p ) #担当に割り当てられたアイテムを取得します。
+	pi = Exceler.pickup_incomplete( pi ) # そのうち、未完了のものを取得します。
+	if( pi.length != 0 ) # 未完了なものがあればHTMLにエクスポートしておきます。
+		s+=Exceler.export_item_html( items , p ,nil )
+		m[p]=pi.length.to_s	# 担当ごとの残アイテム数をMAPにしておきます。
+	end
+end
+	
+#export as html	
+Exceler.write_html_file( "test.html" , s , nil )
 
-list = Exceler.list_files( "test2" )
-so = Exceler::ScanOption.new( 2 , "A" , "B" , "D" , "E" , "F" , "済" )
-items = Exceler.scan_items( list ,so )
-assigned_items = Exceler.pickup_assigned( items , "山田")
-incomplete_items = Exceler.pickup_incomplete( items )
-expiration_items = Exceler.pickup_expiration( items )
-
-puts "Total items:" + items.length.to_s
-puts "Yamda assgined items :" + assigned_items.length.to_s
-puts "Incomplete items :" + incomplete_items.length.to_s
-puts "Expiration items :" + expiration_items.length.to_s
+#export as csv
+Exceler.write_csv_file( "test.csv" , m )
 
 ```
 
