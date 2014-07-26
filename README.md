@@ -33,7 +33,7 @@ for p in plist
 	pi = Exceler.pickup_assigned( items , p ) #担当に割り当てられたアイテムを取得します。
 	pi = Exceler.pickup_incomplete( pi ) # そのうち、未完了のものを取得します。
 	if( pi.length != 0 ) # 未完了なものがあればHTMLにエクスポートしておきます。
-		s+=Exceler.export_item_html( items , p ,nil )
+		s+=Exceler.export_item_html( pi , p ,nil )
 		m[p]=pi.length.to_s	# 担当ごとの残アイテム数をMAPにしておきます。
 	end
 end
