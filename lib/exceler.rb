@@ -86,7 +86,6 @@ end
 		for ext in EXT_PATTERNS
 			filepattern = dir+File::SEPARATOR+"*."+ext;
 			Dir[filepattern].each do |file|  
-#				puts "founds " + file
 				ret.push( file )
 			end
 		end
@@ -114,7 +113,6 @@ end
  				s += "state: incomplete"
  			end
  		end
- 		puts s
  	end
 
  	#
@@ -132,7 +130,6 @@ end
 			return nil
 		end
 		for file in files
-			puts file
 			re = Regexp.new( XLS+"$" )
 			if( file =~ re ) # XLS file
 				# puts "XLS file scan " + file
@@ -180,7 +177,6 @@ end
 							i.limit = s.cell( opt.limit_row , num )
 						end
 						if( opt.state_row != nil )
-							puts opt.state_row
 							if( opt.state_condition == nil )
 								if( s.cell( opt.state_row , num ) != nil )
 									i.state = Item::COMPLETE
@@ -212,7 +208,7 @@ end
 	# ==== Args
 	# items :: アイテムの配列
 	# ==== Return
-	# 担当に割あたっている人の配列
+	# array of the assigned persons 担当になっている人の配列
 	#        
 	def self.list_assigned_person( items )
 		pl = {}
@@ -232,7 +228,7 @@ end
 	# items :: アイテムの配列
 	# assign :: 担当
 	# ==== Return
-	# 担当に割あたっているアイテムの配列
+	# array of the items which is asseigned to the sepecified person 担当に割あたっているアイテムの配列
 	#        
 	def self.pickup_assigned( items , assign )
 		ret = []
@@ -251,7 +247,8 @@ end
 	# ==== Args
 	# items :: アイテムの配列
 	# ==== Return
-	# 未完了アイテムの配列
+	# array of the incomplete items 未完了アイテムの配列
+	#
 	def self.pickup_incomplete( items )
 		ret = []
 		for item in items
@@ -269,7 +266,7 @@ end
 	# ==== Args
 	# items :: アイテムの配列
 	# ==== Return
-	# 期限切れになっているアイテムの配列
+	# array of the expired items 期限切れになっているアイテムの配列
 	def self.pickup_expired( items )
 		ret = []
 		current = Date.today
@@ -293,7 +290,6 @@ end
 	# items :: アイテムの配列
 	# ==== Return
 	# HTML Content
-	#
 	def self.export_item_html( items , title , subtitle )
 		s=""
 		if( title != nil )
@@ -319,8 +315,6 @@ end
 		end
 		s+= "</table>"
 		s+= "</p>"	
-		# puts "------"
-		# puts s	
 		return s
 	end
 
@@ -349,7 +343,6 @@ end
 	# content :: Content of the file
 	# ==== Return
 	# HTML Content
-	#
 	def self.write_html_file( file , content , css )
 		f = open( file , "w" )
 		if( css == nil )
@@ -365,10 +358,9 @@ end
 	# マップオブジェクトをCSVをにして保存します。
 	# ==== Args
 	# file :: output file
-	# content :: Content of the file
+	# map :: map object
 	# ==== Return
 	# HTML Content
-	#
 	def self.write_csv_file( file , map )
 		keys = map.keys
 		ks = ""
