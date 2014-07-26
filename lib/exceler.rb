@@ -195,10 +195,8 @@ end
 								end
 							end
 						end
-						show_item( i )
+						# show_item( i )
 						ret.push( i )
-					else
-						puts "skip!!"
 					end
 				end
 			end
@@ -299,10 +297,9 @@ end
 	def self.export_item_html( items , title , subtitle )
 		s=""
 		if( title != nil )
-			puts "!!"
-			s+="<p class='exceler-title'><h3>"+title+ "-"
+			s+="<p class='exceler-title'><h3>"+title
 			if( subtitle != nil )
-				s+=subtitle+ ":" + items.length.to_s
+				s+=+"-" + subtitle+ ":" + items.length.to_s
 			end
 			s+="</h3><br>"
 		end
